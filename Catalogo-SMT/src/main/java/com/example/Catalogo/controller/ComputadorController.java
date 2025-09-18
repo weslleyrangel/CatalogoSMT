@@ -40,6 +40,7 @@ public class ComputadorController {
     /**
      * Lista todos os computadores.
      * GET /api/computadores
+     * @return 
      */
     @GetMapping
     public ResponseEntity<List<ComputadorDTO>> listarTodos() {
@@ -50,6 +51,8 @@ public class ComputadorController {
     /**
      * Busca um computador específico por patrimônio.
      * GET /api/computadores/{patrimonio}
+     * @param patrimonio
+     * @return 
      */
     @GetMapping("/{patrimonio}")
     public ResponseEntity<ComputadorDTO> buscarPorPatrimonio(@PathVariable String patrimonio) {
@@ -60,6 +63,8 @@ public class ComputadorController {
     /**
      * Cria um novo computador.
      * POST /api/computadores
+     * @param computadorDTO
+     * @return 
      */
     @PostMapping
     public ResponseEntity<ComputadorDTO> criar(@RequestBody ComputadorDTO computadorDTO) {
@@ -70,6 +75,9 @@ public class ComputadorController {
     /**
      * Atualiza um computador existente.
      * PUT /api/computadores/{patrimonio}
+     * @param patrimonio
+     * @param computadorDTO
+     * @return 
      */
     @PutMapping("/{patrimonio}")
     public ResponseEntity<ComputadorDTO> atualizar(
@@ -82,6 +90,8 @@ public class ComputadorController {
     /**
      * Exclui um computador.
      * DELETE /api/computadores/{patrimonio}
+     * @param patrimonio
+     * @return 
      */
     @DeleteMapping("/{patrimonio}")
     public ResponseEntity<Map<String, Object>> excluir(@PathVariable String patrimonio) {
@@ -97,6 +107,11 @@ public class ComputadorController {
     /**
      * Filtra computadores com base em parâmetros de pesquisa.
      * GET /api/computadores/filtrar?termo={termo}&setor={setor}&usuario={usuario}&status={status}
+     * @param termo
+     * @param setor
+     * @param usuario
+     * @param status
+     * @return 
      */
     @GetMapping("/filtrar")
     public ResponseEntity<List<ComputadorDTO>> filtrar(
@@ -123,6 +138,7 @@ public class ComputadorController {
     /**
      * Lista computadores em manutenção.
      * GET /api/computadores/manutencao
+     * @return 
      */
     @GetMapping("/manutencao")
     public ResponseEntity<List<ComputadorDTO>> listarEmManutencao() {
@@ -133,6 +149,7 @@ public class ComputadorController {
     /**
      * Obtém estatísticas dos computadores.
      * GET /api/computadores/estatisticas
+     * @return 
      */
     @GetMapping("/estatisticas")
     public ResponseEntity<Map<String, Long>> obterEstatisticas() {
@@ -143,6 +160,8 @@ public class ComputadorController {
     /**
      * Conta computadores por status específico.
      * GET /api/computadores/contar/{status}
+     * @param status
+     * @return 
      */
     @GetMapping("/contar/{status}")
     public ResponseEntity<Map<String, Long>> contarPorStatus(@PathVariable String status) {
@@ -157,6 +176,8 @@ public class ComputadorController {
     /**
      * Endpoint para buscar computadores por setor específico.
      * GET /api/computadores/setor/{setor}
+     * @param setor
+     * @return 
      */
     @GetMapping("/setor/{setor}")
     public ResponseEntity<List<ComputadorDTO>> buscarPorSetor(@PathVariable String setor) {
@@ -168,6 +189,8 @@ public class ComputadorController {
     /**
      * Endpoint para buscar computadores por usuário específico.
      * GET /api/computadores/usuario/{usuario}
+     * @param usuario
+     * @return 
      */
     @GetMapping("/usuario/{usuario}")
     public ResponseEntity<List<ComputadorDTO>> buscarPorUsuario(@PathVariable String usuario) {
@@ -179,6 +202,8 @@ public class ComputadorController {
     /**
      * Endpoint para pesquisa rápida por patrimônio ou usuário.
      * GET /api/computadores/pesquisar?q={termo}
+     * @param q
+     * @return 
      */
     @GetMapping("/pesquisar")
     public ResponseEntity<List<ComputadorDTO>> pesquisar(@RequestParam String q) {

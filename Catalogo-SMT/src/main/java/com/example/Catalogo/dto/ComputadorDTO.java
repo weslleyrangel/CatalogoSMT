@@ -23,7 +23,6 @@ public class ComputadorDTO {
     private LocalDateTime dataCriacao;
     private LocalDateTime dataAtualizacao;
 
-    // Constructors
     public ComputadorDTO() {}
 
     public ComputadorDTO(Computador computador) {
@@ -43,7 +42,7 @@ public class ComputadorDTO {
 
     /**
      * Converte o DTO em uma entidade Computador.
-     * @return Nova instância de Computador
+     * @return 
      */
     public Computador toEntity() {
         Computador computador = new Computador();
@@ -60,7 +59,6 @@ public class ComputadorDTO {
         return computador;
     }
 
-    // Getters and Setters
     public String getPatrimonio() {
         return patrimonio;
     }

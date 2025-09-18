@@ -19,7 +19,6 @@ public class CatalogoSmtApplication {
     public static void main(String[] args) {
         ApplicationContext context = SpringApplication.run(CatalogoSmtApplication.class, args);
         
-        // Executar testes após a inicialização
         executarTestesIntegracao(context);
         
         exibirInformacoesSistema();
@@ -34,7 +33,7 @@ public class CatalogoSmtApplication {
         System.out.println("=".repeat(80));
 
         try {
-            // Obter services do contexto Spring
+            
             IAuthenticationService authService = context.getBean(IAuthenticationService.class);
             IComputadorService computadorService = context.getBean(IComputadorService.class);
             IImpressoraService impressoraService = context.getBean(IImpressoraService.class);

@@ -21,7 +21,6 @@ public class ImpressoraDTO {
     private LocalDateTime dataCriacao;
     private LocalDateTime dataAtualizacao;
 
-    // Constructors
     public ImpressoraDTO() {}
 
     public ImpressoraDTO(Impressora impressora) {
@@ -39,7 +38,7 @@ public class ImpressoraDTO {
 
     /**
      * Converte o DTO em uma entidade Impressora.
-     * @return Nova instância de Impressora
+     * @return 
      */
     public Impressora toEntity() {
         Impressora impressora = new Impressora();
@@ -54,7 +53,6 @@ public class ImpressoraDTO {
         return impressora;
     }
 
-    // Getters and Setters
     public String getPatrimonio() {
         return patrimonio;
     }

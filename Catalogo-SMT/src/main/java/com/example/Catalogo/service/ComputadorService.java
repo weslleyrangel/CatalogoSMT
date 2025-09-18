@@ -142,17 +142,14 @@ public class ComputadorService implements IComputadorService {
     private FilterCriteria buildFilterCriteria(String termoPesquisa, Map<String, String> filtros) {
         FilterCriteria criteria = new FilterCriteria();
         
-        // Aplica termo de pesquisa em patrimônio e usuário
         if (termoPesquisa != null && !termoPesquisa.trim().isEmpty()) {
             criteria.patrimonio = termoPesquisa.trim();
             criteria.usuario = termoPesquisa.trim();
         }
 
-        // Aplica filtros específicos
         criteria.setor = filtros.get("setor");
         criteria.status = filtros.get("status");
         
-        // Sobrescreve usuário se especificado nos filtros
         if (filtros.containsKey("usuario") && 
             filtros.get("usuario") != null && 
             !filtros.get("usuario").trim().isEmpty()) {
@@ -162,7 +159,6 @@ public class ComputadorService implements IComputadorService {
         return criteria;
     }
 
-    // Classe interna para critérios de filtro
     private static class FilterCriteria {
         String patrimonio;
         String usuario;

@@ -40,6 +40,7 @@ public class ImpressoraController {
     /**
      * Lista todas as impressoras.
      * GET /api/impressoras
+     * @return 
      */
     @GetMapping
     public ResponseEntity<List<ImpressoraDTO>> listarTodas() {
@@ -50,6 +51,8 @@ public class ImpressoraController {
     /**
      * Busca uma impressora específica por patrimônio.
      * GET /api/impressoras/{patrimonio}
+     * @param patrimonio
+     * @return 
      */
     @GetMapping("/{patrimonio}")
     public ResponseEntity<ImpressoraDTO> buscarPorPatrimonio(@PathVariable String patrimonio) {
@@ -60,6 +63,8 @@ public class ImpressoraController {
     /**
      * Cria uma nova impressora.
      * POST /api/impressoras
+     * @param impressoraDTO
+     * @return 
      */
     @PostMapping
     public ResponseEntity<ImpressoraDTO> criar(@RequestBody ImpressoraDTO impressoraDTO) {
@@ -70,6 +75,9 @@ public class ImpressoraController {
     /**
      * Atualiza uma impressora existente.
      * PUT /api/impressoras/{patrimonio}
+     * @param patrimonio
+     * @param impressoraDTO
+     * @return 
      */
     @PutMapping("/{patrimonio}")
     public ResponseEntity<ImpressoraDTO> atualizar(
@@ -82,6 +90,8 @@ public class ImpressoraController {
     /**
      * Exclui uma impressora.
      * DELETE /api/impressoras/{patrimonio}
+     * @param patrimonio
+     * @return 
      */
     @DeleteMapping("/{patrimonio}")
     public ResponseEntity<Map<String, Object>> excluir(@PathVariable String patrimonio) {
@@ -97,6 +107,10 @@ public class ImpressoraController {
     /**
      * Filtra impressoras com base em parâmetros de pesquisa.
      * GET /api/impressoras/filtrar?termo={termo}&tipo={tipo}&status={status}
+     * @param termo
+     * @param tipo
+     * @param status
+     * @return 
      */
     @GetMapping("/filtrar")
     public ResponseEntity<List<ImpressoraDTO>> filtrar(
@@ -119,6 +133,8 @@ public class ImpressoraController {
     /**
      * Lista impressoras por tipo específico.
      * GET /api/impressoras/tipo/{tipo}
+     * @param tipo
+     * @return 
      */
     @GetMapping("/tipo/{tipo}")
     public ResponseEntity<List<ImpressoraDTO>> buscarPorTipo(@PathVariable String tipo) {
@@ -129,6 +145,8 @@ public class ImpressoraController {
     /**
      * Lista impressoras por status específico.
      * GET /api/impressoras/status/{status}
+     * @param status
+     * @return 
      */
     @GetMapping("/status/{status}")
     public ResponseEntity<List<ImpressoraDTO>> buscarPorStatus(@PathVariable String status) {
@@ -149,6 +167,8 @@ public class ImpressoraController {
     /**
      * Conta impressoras por status específico.
      * GET /api/impressoras/contar/status/{status}
+     * @param status
+     * @return 
      */
     @GetMapping("/contar/status/{status}")
     public ResponseEntity<Map<String, Long>> contarPorStatus(@PathVariable String status) {
@@ -163,6 +183,8 @@ public class ImpressoraController {
     /**
      * Conta impressoras por tipo específico.
      * GET /api/impressoras/contar/tipo/{tipo}
+     * @param tipo
+     * @return 
      */
     @GetMapping("/contar/tipo/{tipo}")
     public ResponseEntity<Map<String, Long>> contarPorTipo(@PathVariable String tipo) {
@@ -177,6 +199,8 @@ public class ImpressoraController {
     /**
      * Endpoint para pesquisa rápida por patrimônio ou modelo.
      * GET /api/impressoras/pesquisar?q={termo}
+     * @param q
+     * @return 
      */
     @GetMapping("/pesquisar")
     public ResponseEntity<List<ImpressoraDTO>> pesquisar(@RequestParam String q) {
@@ -187,6 +211,7 @@ public class ImpressoraController {
     /**
      * Lista todas as impressoras disponíveis (status ativo).
      * GET /api/impressoras/disponiveis
+     * @return 
      */
     @GetMapping("/disponiveis")
     public ResponseEntity<List<ImpressoraDTO>> listarDisponiveis() {
@@ -197,6 +222,7 @@ public class ImpressoraController {
     /**
      * Lista impressoras em manutenção.
      * GET /api/impressoras/manutencao
+     * @return 
      */
     @GetMapping("/manutencao")
     public ResponseEntity<List<ImpressoraDTO>> listarEmManutencao() {
