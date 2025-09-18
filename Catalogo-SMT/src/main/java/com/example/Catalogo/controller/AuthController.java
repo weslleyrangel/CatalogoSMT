@@ -29,6 +29,8 @@ public class AuthController {
     /**
      * Endpoint para realizar login no sistema.
      * POST /api/auth/login
+     * @param loginRequest
+     * @return 
      */
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) {
@@ -52,6 +54,7 @@ public class AuthController {
     /**
      * Endpoint para realizar logout do sistema.
      * POST /api/auth/logout
+     * @return 
      */
     @PostMapping("/logout")
     public ResponseEntity<Map<String, Object>> logout() {
@@ -64,6 +67,8 @@ public class AuthController {
     /**
      * Endpoint para recuperação de senha.
      * POST /api/auth/recuperar-senha
+     * @param request
+     * @return 
      */
     @PostMapping("/recuperar-senha")
     public ResponseEntity<Map<String, Object>> recuperarSenha(@RequestBody Map<String, String> request) {
@@ -82,6 +87,8 @@ public class AuthController {
     /**
      * Endpoint para verificar se o usuário está autenticado.
      * GET /api/auth/verificar
+     * @param authHeader
+     * @return 
      */
     @GetMapping("/verificar")
     public ResponseEntity<Map<String, Object>> verificarAutenticacao(
@@ -98,7 +105,6 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    // DTOs para requests e responses
     public static class LoginRequest {
         private String email;
         private String senha;
@@ -110,7 +116,6 @@ public class AuthController {
             this.senha = senha;
         }
 
-        // Getters and Setters
         public String getEmail() { return email; }
         public void setEmail(String email) { this.email = email; }
         public String getSenha() { return senha; }
@@ -132,7 +137,6 @@ public class AuthController {
             this.perfil = perfil;
         }
 
-        // Getters and Setters
         public boolean isSucesso() { return sucesso; }
         public void setSucesso(boolean sucesso) { this.sucesso = sucesso; }
         public String getMensagem() { return mensagem; }

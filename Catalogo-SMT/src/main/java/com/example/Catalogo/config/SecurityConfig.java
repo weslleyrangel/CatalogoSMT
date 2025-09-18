@@ -9,8 +9,7 @@ import org.springframework.security.config.annotation.web.configurers.HeadersCon
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
- * Configuração de segurança corrigida para Spring Boot 3.x
- * Remove dependências legadas do javax.servlet
+ * Configuração de segurança 
  */
 @Configuration
 @EnableWebSecurity
@@ -19,18 +18,15 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            // Desabilita CSRF para APIs REST
             .csrf(AbstractHttpConfigurer::disable)
             
-            // Configuração de autorização usando a nova sintaxe
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers("/h2-console/**").permitAll()
                 .requestMatchers("/api/**").permitAll()
-                .requestMatchers("/actuator/**").permitAll() // Para health checks
+                .requestMatchers("/actuator/**").permitAll() 
                 .anyRequest().authenticated()
             )
             
-            // Configuração de headers para permitir H2 Console
             .headers(headers -> headers
                 .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)
             );

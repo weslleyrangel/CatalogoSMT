@@ -45,7 +45,6 @@ public class AuthenticationService implements IAuthenticationService {
 
     @Override
     public boolean isValidSession(String authToken) {
-        // Implementação simplificada - em produção usaria JWT
         return authToken != null && !authToken.trim().isEmpty();
     }
 
@@ -55,7 +54,6 @@ public class AuthenticationService implements IAuthenticationService {
             return AuthenticationResult.failure("Email é obrigatório");
         }
 
-        // Em produção, enviaria email real
         return AuthenticationResult.success(
             null, null,
             "Se o email estiver cadastrado, você receberá as instruções de recuperação"
@@ -114,7 +112,6 @@ public class AuthenticationService implements IAuthenticationService {
             return new AuthenticationResult(false, message, null, null);
         }
 
-        // Getters
         public boolean isSuccess() { return success; }
         public String getMessage() { return message; }
         public String getUsername() { return username; }

@@ -131,7 +131,6 @@ public class ImpressoraService implements IImpressoraService {
         );
     }
 
-    // Métodos privados para melhor organização
     private Impressora findImpressoraByPatrimonio(String patrimonio) {
         return impressoraRepository.findByPatrimonio(patrimonio)
                 .orElseThrow(() -> new ResourceNotFoundException(
@@ -169,7 +168,6 @@ public class ImpressoraService implements IImpressoraService {
         return criteria;
     }
 
-    // Classe interna para critérios de filtro
     private static class FilterCriteria {
         String patrimonio;
         String tipo;

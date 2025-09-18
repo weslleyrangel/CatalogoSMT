@@ -6,9 +6,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
 /**
- * Classe refatorada aplicando o princípio SRP.
  * Responsável apenas por executar a inicialização durante o boot da aplicação.
- * A lógica de carregamento foi delegada para o DataInitializationService.
  */
 @Component
 public class DataLoader implements CommandLineRunner {

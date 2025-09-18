@@ -33,7 +33,6 @@ class CatalogoSmtApplicationTests {
     @Test
     void contextLoads() {
         // Este teste verifica se o contexto Spring carrega sem erros
-        // Se chegou até aqui, o contexto foi carregado com sucesso
         assertThat(true).isTrue();
     }
 
@@ -68,7 +67,6 @@ class CatalogoSmtApplicationTests {
         if (computadorService != null) {
             var computadores = computadorService.listarTodos();
             assertThat(computadores).isNotNull();
-            // Como os dados são carregados pelo DataLoader, deve ter pelo menos alguns computadores
             assertThat(computadores.size()).isGreaterThanOrEqualTo(0);
         }
     }

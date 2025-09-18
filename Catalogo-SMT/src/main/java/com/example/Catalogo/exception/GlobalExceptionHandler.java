@@ -19,6 +19,9 @@ public class GlobalExceptionHandler {
 
     /**
      * Trata exceções quando um recurso não é encontrado.
+     * @param ex
+     * @param request
+     * @return 
      */
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleResourceNotFound(
@@ -36,6 +39,9 @@ public class GlobalExceptionHandler {
 
     /**
      * Trata exceções quando se tenta criar um recurso duplicado.
+     * @param ex
+     * @param request
+     * @return 
      */
     @ExceptionHandler(DuplicateResourceException.class)
     public ResponseEntity<Map<String, Object>> handleDuplicateResource(
@@ -53,6 +59,9 @@ public class GlobalExceptionHandler {
 
     /**
      * Trata exceções de argumentos inválidos.
+     * @param ex
+     * @param request
+     * @return 
      */
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalArgument(
@@ -70,6 +79,9 @@ public class GlobalExceptionHandler {
 
     /**
      * Trata exceções gerais não capturadas pelos handlers específicos.
+     * @param ex
+     * @param request
+     * @return 
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGlobalException(
@@ -82,7 +94,6 @@ public class GlobalExceptionHandler {
         errorDetails.put("message", "Ocorreu um erro interno. Tente novamente mais tarde.");
         errorDetails.put("path", request.getDescription(false).replace("uri=", ""));
         
-        // Log do erro real para debug (em produção, usar um logger apropriado)
         System.err.println("Erro interno: " + ex.getMessage());
         ex.printStackTrace();
         

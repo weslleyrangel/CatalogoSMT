@@ -12,8 +12,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Configuração de CORS corrigida para Spring Boot 3.x
- * Compatível com jakarta.servlet ao invés de javax.servlet
+ * Configuração de CORS
  */
 @Configuration
 public class CorsConfig implements WebMvcConfigurer {
