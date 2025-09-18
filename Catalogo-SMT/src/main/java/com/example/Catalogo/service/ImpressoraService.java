@@ -5,6 +5,7 @@ import com.example.Catalogo.exception.ResourceNotFoundException;
 import com.example.Catalogo.exception.DuplicateResourceException;
 import com.example.Catalogo.model.Impressora;
 import com.example.Catalogo.repository.ImpressoraRepository;
+import com.example.Catalogo.service.interfaces.IImpressoraService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,8 +20,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Transactional
-public class ImpressoraService {
-
+public class ImpressoraService implements IImpressoraService {
     private final ImpressoraRepository impressoraRepository;
 
     @Autowired
@@ -28,10 +28,7 @@ public class ImpressoraService {
         this.impressoraRepository = impressoraRepository;
     }
 
-    /**
-     * Lista todas as impressoras cadastradas.
-     * @return Lista de DTOs de impressoras
-     */
+    @Override
     @Transactional(readOnly = true)
     public List<ImpressoraDTO> listarTodas() {
         return impressoraRepository.findAll()
@@ -40,64 +37,33 @@ public class ImpressoraService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Busca uma impressora por patrimônio.
-     * @param patrimonio Número do patrimônio
-     * @return DTO da impressora encontrada
-     * @throws ResourceNotFoundException se a impressora não for encontrada
-     */
+    @Override
     @Transactional(readOnly = true)
     public ImpressoraDTO buscarPorPatrimonio(String patrimonio) {
-        Impressora impressora = impressoraRepository.findByPatrimonio(patrimonio)
-                .orElseThrow(() -> new ResourceNotFoundException("Impressora não encontrada com patrimônio: " + patrimonio));
+        Impressora impressora = findImpressoraByPatrimonio(patrimonio);
         return new ImpressoraDTO(impressora);
     }
 
-    /**
-     * Adiciona uma nova impressora ao inventário.
-     * @param impressoraDTO Dados da impressora a ser adicionada
-     * @return DTO da impressora criada
-     * @throws DuplicateResourceException se já existe uma impressora com o mesmo patrimônio
-     */
+    @Override
     public ImpressoraDTO adicionar(ImpressoraDTO impressoraDTO) {
-        if (impressoraRepository.existsByPatrimonio(impressoraDTO.getPatrimonio())) {
-            throw new DuplicateResourceException("Já existe uma impressora com o patrimônio: " + impressoraDTO.getPatrimonio());
-        }
-
+        validateNewImpressora(impressoraDTO);
+        
         Impressora impressora = impressoraDTO.toEntity();
         Impressora impressoraSalva = impressoraRepository.save(impressora);
         return new ImpressoraDTO(impressoraSalva);
     }
 
-    /**
-     * Atualiza uma impressora existente.
-     * @param patrimonio Patrimônio da impressora a ser atualizada
-     * @param impressoraDTO Novos dados da impressora
-     * @return DTO da impressora atualizada
-     * @throws ResourceNotFoundException se a impressora não for encontrada
-     */
+    @Override
     public ImpressoraDTO atualizar(String patrimonio, ImpressoraDTO impressoraDTO) {
-        Impressora impressoraExistente = impressoraRepository.findByPatrimonio(patrimonio)
-                .orElseThrow(() -> new ResourceNotFoundException("Impressora não encontrada com patrimônio: " + patrimonio));
-
-        // Atualiza os campos
-        impressoraExistente.setTipo(impressoraDTO.getTipo());
-        impressoraExistente.setLocalizacao(impressoraDTO.getLocalizacao());
-        impressoraExistente.setStatus(impressoraDTO.getStatus());
-        impressoraExistente.setFabricante(impressoraDTO.getFabricante());
-        impressoraExistente.setModelo(impressoraDTO.getModelo());
-        impressoraExistente.setIp(impressoraDTO.getIp());
-        impressoraExistente.setPorta(impressoraDTO.getPorta());
-
+        Impressora impressoraExistente = findImpressoraByPatrimonio(patrimonio);
+        
+        updateImpressoraFields(impressoraExistente, impressoraDTO);
+        
         Impressora impressoraAtualizada = impressoraRepository.save(impressoraExistente);
         return new ImpressoraDTO(impressoraAtualizada);
     }
 
-    /**
-     * Exclui uma impressora do inventário.
-     * @param patrimonio Patrimônio da impressora a ser excluída
-     * @throws ResourceNotFoundException se a impressora não for encontrada
-     */
+    @Override
     public void excluir(String patrimonio) {
         if (!impressoraRepository.existsByPatrimonio(patrimonio)) {
             throw new ResourceNotFoundException("Impressora não encontrada com patrimônio: " + patrimonio);
@@ -105,38 +71,23 @@ public class ImpressoraService {
         impressoraRepository.deleteById(patrimonio);
     }
 
-    /**
-     * Filtra impressoras com base em termo de pesquisa e filtros específicos.
-     * @param termoPesquisa Termo para busca em patrimônio e modelo
-     * @param filtros Mapa de filtros (tipo, status)
-     * @return Lista de DTOs de impressoras filtradas
-     */
+    @Override
     @Transactional(readOnly = true)
     public List<ImpressoraDTO> filtrar(String termoPesquisa, Map<String, String> filtros) {
-        String patrimonio = null;
-        String modelo = null;
-        String localizacao = null;
+        FilterCriteria criteria = buildFilterCriteria(termoPesquisa, filtros);
         
-        // Se há termo de pesquisa, aplica em patrimônio e modelo
-        if (termoPesquisa != null && !termoPesquisa.trim().isEmpty()) {
-            patrimonio = termoPesquisa.trim();
-            modelo = termoPesquisa.trim();
-        }
-
-        String tipo = filtros.get("tipo");
-        String status = filtros.get("status");
-
-        return impressoraRepository.findWithFilters(patrimonio, tipo, modelo, localizacao, status)
-                .stream()
-                .map(ImpressoraDTO::new)
-                .collect(Collectors.toList());
+        return impressoraRepository.findWithFilters(
+                criteria.patrimonio, 
+                criteria.tipo, 
+                criteria.modelo, 
+                criteria.localizacao, 
+                criteria.status
+        ).stream()
+         .map(ImpressoraDTO::new)
+         .collect(Collectors.toList());
     }
 
-    /**
-     * Busca impressoras por tipo.
-     * @param tipo Tipo da impressora (Impressora, Scanner, Multifuncional)
-     * @return Lista de DTOs de impressoras do tipo especificado
-     */
+    @Override
     @Transactional(readOnly = true)
     public List<ImpressoraDTO> buscarPorTipo(String tipo) {
         return impressoraRepository.findByTipo(tipo)
@@ -145,11 +96,7 @@ public class ImpressoraService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Busca impressoras por status.
-     * @param status Status da impressora
-     * @return Lista de DTOs de impressoras com o status especificado
-     */
+    @Override
     @Transactional(readOnly = true)
     public List<ImpressoraDTO> buscarPorStatus(String status) {
         return impressoraRepository.findByStatus(status)
@@ -158,48 +105,77 @@ public class ImpressoraService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Conta o número total de impressoras por status.
-     * @param status Status para contar
-     * @return Quantidade de impressoras
-     */
+    @Override
     @Transactional(readOnly = true)
     public long contarPorStatus(String status) {
         return impressoraRepository.countByStatus(status);
     }
 
-    /**
-     * Conta o número total de impressoras por tipo.
-     * @param tipo Tipo para contar
-     * @return Quantidade de impressoras
-     */
+    @Override
     @Transactional(readOnly = true)
     public long contarPorTipo(String tipo) {
         return impressoraRepository.countByTipo(tipo);
     }
 
-    /**
-     * Obtém estatísticas básicas das impressoras.
-     * @return Mapa com estatísticas (total, ativas, inativas, manutenção, por tipo)
-     */
+    @Override
     @Transactional(readOnly = true)
     public Map<String, Long> obterEstatisticas() {
-        long total = impressoraRepository.count();
-        long ativas = impressoraRepository.countByStatus("Ativo");
-        long inativas = impressoraRepository.countByStatus("Inativo");
-        long manutencao = impressoraRepository.countByStatus("Manutenção");
-        long impressoras = impressoraRepository.countByTipo("Impressora");
-        long scanners = impressoraRepository.countByTipo("Scanner");
-        long multifuncionais = impressoraRepository.countByTipo("Multifuncional");
-
         return Map.of(
-                "total", total,
-                "ativas", ativas,
-                "inativas", inativas,
-                "manutencao", manutencao,
-                "impressoras", impressoras,
-                "scanners", scanners,
-                "multifuncionais", multifuncionais
+                "total", impressoraRepository.count(),
+                "ativas", impressoraRepository.countByStatus("Ativo"),
+                "inativas", impressoraRepository.countByStatus("Inativo"),
+                "manutencao", impressoraRepository.countByStatus("Manutenção"),
+                "impressoras", impressoraRepository.countByTipo("Impressora"),
+                "scanners", impressoraRepository.countByTipo("Scanner"),
+                "multifuncionais", impressoraRepository.countByTipo("Multifuncional")
         );
     }
+
+    // Métodos privados para melhor organização
+    private Impressora findImpressoraByPatrimonio(String patrimonio) {
+        return impressoraRepository.findByPatrimonio(patrimonio)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                    "Impressora não encontrada com patrimônio: " + patrimonio));
+    }
+
+    private void validateNewImpressora(ImpressoraDTO impressoraDTO) {
+        if (impressoraRepository.existsByPatrimonio(impressoraDTO.getPatrimonio())) {
+            throw new DuplicateResourceException(
+                "Já existe uma impressora com o patrimônio: " + impressoraDTO.getPatrimonio());
+        }
+    }
+
+    private void updateImpressoraFields(Impressora existente, ImpressoraDTO dto) {
+        existente.setTipo(dto.getTipo());
+        existente.setLocalizacao(dto.getLocalizacao());
+        existente.setStatus(dto.getStatus());
+        existente.setFabricante(dto.getFabricante());
+        existente.setModelo(dto.getModelo());
+        existente.setIp(dto.getIp());
+        existente.setPorta(dto.getPorta());
+    }
+
+    private FilterCriteria buildFilterCriteria(String termoPesquisa, Map<String, String> filtros) {
+        FilterCriteria criteria = new FilterCriteria();
+        
+        if (termoPesquisa != null && !termoPesquisa.trim().isEmpty()) {
+            criteria.patrimonio = termoPesquisa.trim();
+            criteria.modelo = termoPesquisa.trim();
+        }
+
+        criteria.tipo = filtros.get("tipo");
+        criteria.status = filtros.get("status");
+
+        return criteria;
+    }
+
+    // Classe interna para critérios de filtro
+    private static class FilterCriteria {
+        String patrimonio;
+        String tipo;
+        String modelo;
+        String localizacao;
+        String status;
+    }
 }
+    

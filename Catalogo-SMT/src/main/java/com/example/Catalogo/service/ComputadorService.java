@@ -5,6 +5,7 @@ import com.example.Catalogo.exception.ResourceNotFoundException;
 import com.example.Catalogo.exception.DuplicateResourceException;
 import com.example.Catalogo.model.Computador;
 import com.example.Catalogo.repository.ComputadorRepository;
+import com.example.Catalogo.service.interfaces.IComputadorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,12 +15,12 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Camada de serviço para operações de negócio relacionadas a Computadores.
- * Contém toda a lógica de negócio e validações necessárias.
+ * Serviço de computadores refatorado implementando a interface IComputadorService.
+ * Aplica os princípios DIP e SRP.
  */
 @Service
 @Transactional
-public class ComputadorService {
+public class ComputadorService implements IComputadorService {
 
     private final ComputadorRepository computadorRepository;
 
@@ -28,10 +29,7 @@ public class ComputadorService {
         this.computadorRepository = computadorRepository;
     }
 
-    /**
-     * Lista todos os computadores cadastrados.
-     * @return Lista de DTOs de computadores
-     */
+    @Override
     @Transactional(readOnly = true)
     public List<ComputadorDTO> listarTodos() {
         return computadorRepository.findAll()
@@ -40,66 +38,33 @@ public class ComputadorService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Busca um computador por patrimônio.
-     * @param patrimonio Número do patrimônio
-     * @return DTO do computador encontrado
-     * @throws ResourceNotFoundException se o computador não for encontrado
-     */
+    @Override
     @Transactional(readOnly = true)
     public ComputadorDTO buscarPorPatrimonio(String patrimonio) {
-        Computador computador = computadorRepository.findByPatrimonio(patrimonio)
-                .orElseThrow(() -> new ResourceNotFoundException("Computador não encontrado com patrimônio: " + patrimonio));
+        Computador computador = findComputadorByPatrimonio(patrimonio);
         return new ComputadorDTO(computador);
     }
 
-    /**
-     * Adiciona um novo computador ao inventário.
-     * @param computadorDTO Dados do computador a ser adicionado
-     * @return DTO do computador criado
-     * @throws DuplicateResourceException se já existe um computador com o mesmo patrimônio
-     */
+    @Override
     public ComputadorDTO adicionar(ComputadorDTO computadorDTO) {
-        if (computadorRepository.existsByPatrimonio(computadorDTO.getPatrimonio())) {
-            throw new DuplicateResourceException("Já existe um computador com o patrimônio: " + computadorDTO.getPatrimonio());
-        }
-
+        validateNewComputador(computadorDTO);
+        
         Computador computador = computadorDTO.toEntity();
         Computador computadorSalvo = computadorRepository.save(computador);
         return new ComputadorDTO(computadorSalvo);
     }
 
-    /**
-     * Atualiza um computador existente.
-     * @param patrimonio Patrimônio do computador a ser atualizado
-     * @param computadorDTO Novos dados do computador
-     * @return DTO do computador atualizado
-     * @throws ResourceNotFoundException se o computador não for encontrado
-     */
+    @Override
     public ComputadorDTO atualizar(String patrimonio, ComputadorDTO computadorDTO) {
-        Computador computadorExistente = computadorRepository.findByPatrimonio(patrimonio)
-                .orElseThrow(() -> new ResourceNotFoundException("Computador não encontrado com patrimônio: " + patrimonio));
-
-        // Atualiza os campos
-        computadorExistente.setUsuario(computadorDTO.getUsuario());
-        computadorExistente.setSetor(computadorDTO.getSetor());
-        computadorExistente.setStatus(computadorDTO.getStatus());
-        computadorExistente.setFabricante(computadorDTO.getFabricante());
-        computadorExistente.setModelo(computadorDTO.getModelo());
-        computadorExistente.setProcessador(computadorDTO.getProcessador());
-        computadorExistente.setRam(computadorDTO.getRam());
-        computadorExistente.setArmazenamento(computadorDTO.getArmazenamento());
-        computadorExistente.setOs(computadorDTO.getOs());
-
+        Computador computadorExistente = findComputadorByPatrimonio(patrimonio);
+        
+        updateComputadorFields(computadorExistente, computadorDTO);
+        
         Computador computadorAtualizado = computadorRepository.save(computadorExistente);
         return new ComputadorDTO(computadorAtualizado);
     }
 
-    /**
-     * Exclui um computador do inventário.
-     * @param patrimonio Patrimônio do computador a ser excluído
-     * @throws ResourceNotFoundException se o computador não for encontrado
-     */
+    @Override
     public void excluir(String patrimonio) {
         if (!computadorRepository.existsByPatrimonio(patrimonio)) {
             throw new ResourceNotFoundException("Computador não encontrado com patrimônio: " + patrimonio);
@@ -107,41 +72,22 @@ public class ComputadorService {
         computadorRepository.deleteById(patrimonio);
     }
 
-    /**
-     * Filtra computadores com base em termo de pesquisa e filtros específicos.
-     * @param termoPesquisa Termo para busca em patrimônio e usuário
-     * @param filtros Mapa de filtros (setor, usuario, status)
-     * @return Lista de DTOs de computadores filtrados
-     */
+    @Override
     @Transactional(readOnly = true)
     public List<ComputadorDTO> filtrar(String termoPesquisa, Map<String, String> filtros) {
-        String patrimonio = null;
-        String usuario = null;
+        FilterCriteria criteria = buildFilterCriteria(termoPesquisa, filtros);
         
-        // Se há termo de pesquisa, aplica tanto em patrimônio quanto usuário
-        if (termoPesquisa != null && !termoPesquisa.trim().isEmpty()) {
-            patrimonio = termoPesquisa.trim();
-            usuario = termoPesquisa.trim();
-        }
-
-        String setor = filtros.get("setor");
-        String status = filtros.get("status");
-        
-        // Se o filtro de usuário foi especificamente definido, usa ele
-        if (filtros.containsKey("usuario") && filtros.get("usuario") != null && !filtros.get("usuario").trim().isEmpty()) {
-            usuario = filtros.get("usuario");
-        }
-
-        return computadorRepository.findWithFilters(patrimonio, usuario, setor, status)
-                .stream()
-                .map(ComputadorDTO::new)
-                .collect(Collectors.toList());
+        return computadorRepository.findWithFilters(
+                criteria.patrimonio, 
+                criteria.usuario, 
+                criteria.setor, 
+                criteria.status
+        ).stream()
+         .map(ComputadorDTO::new)
+         .collect(Collectors.toList());
     }
 
-    /**
-     * Obtém todos os computadores que estão em manutenção.
-     * @return Lista de DTOs de computadores em manutenção
-     */
+    @Override
     @Transactional(readOnly = true)
     public List<ComputadorDTO> obterEmManutencao() {
         return computadorRepository.findEmManutencao()
@@ -150,32 +96,77 @@ public class ComputadorService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Conta o número total de computadores por status.
-     * @param status Status para contar
-     * @return Quantidade de computadores
-     */
+    @Override
     @Transactional(readOnly = true)
     public long contarPorStatus(String status) {
         return computadorRepository.countByStatus(status);
     }
 
-    /**
-     * Obtém estatísticas básicas dos computadores.
-     * @return Mapa com estatísticas (total, ativos, inativos, manutenção)
-     */
+    @Override
     @Transactional(readOnly = true)
     public Map<String, Long> obterEstatisticas() {
-        long total = computadorRepository.count();
-        long ativos = computadorRepository.countByStatus("Ativo");
-        long inativos = computadorRepository.countByStatus("Inativo");
-        long manutencao = computadorRepository.countByStatus("Manutenção");
-
         return Map.of(
-                "total", total,
-                "ativos", ativos,
-                "inativos", inativos,
-                "manutencao", manutencao
+                "total", computadorRepository.count(),
+                "ativos", computadorRepository.countByStatus("Ativo"),
+                "inativos", computadorRepository.countByStatus("Inativo"),
+                "manutencao", computadorRepository.countByStatus("Manutenção")
         );
+    }
+
+    // Métodos privados para melhor organização e reutilização
+    private Computador findComputadorByPatrimonio(String patrimonio) {
+        return computadorRepository.findByPatrimonio(patrimonio)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                    "Computador não encontrado com patrimônio: " + patrimonio));
+    }
+
+    private void validateNewComputador(ComputadorDTO computadorDTO) {
+        if (computadorRepository.existsByPatrimonio(computadorDTO.getPatrimonio())) {
+            throw new DuplicateResourceException(
+                "Já existe um computador com o patrimônio: " + computadorDTO.getPatrimonio());
+        }
+    }
+
+    private void updateComputadorFields(Computador existente, ComputadorDTO dto) {
+        existente.setUsuario(dto.getUsuario());
+        existente.setSetor(dto.getSetor());
+        existente.setStatus(dto.getStatus());
+        existente.setFabricante(dto.getFabricante());
+        existente.setModelo(dto.getModelo());
+        existente.setProcessador(dto.getProcessador());
+        existente.setRam(dto.getRam());
+        existente.setArmazenamento(dto.getArmazenamento());
+        existente.setOs(dto.getOs());
+    }
+
+    private FilterCriteria buildFilterCriteria(String termoPesquisa, Map<String, String> filtros) {
+        FilterCriteria criteria = new FilterCriteria();
+        
+        // Aplica termo de pesquisa em patrimônio e usuário
+        if (termoPesquisa != null && !termoPesquisa.trim().isEmpty()) {
+            criteria.patrimonio = termoPesquisa.trim();
+            criteria.usuario = termoPesquisa.trim();
+        }
+
+        // Aplica filtros específicos
+        criteria.setor = filtros.get("setor");
+        criteria.status = filtros.get("status");
+        
+        // Sobrescreve usuário se especificado nos filtros
+        if (filtros.containsKey("usuario") && 
+            filtros.get("usuario") != null && 
+            !filtros.get("usuario").trim().isEmpty()) {
+            criteria.usuario = filtros.get("usuario");
+        }
+
+        return criteria;
+    }
+
+    // Classe interna para critérios de filtro
+    private static class FilterCriteria {
+        String patrimonio;
+        String usuario;
+        String setor;
+        String status;
     }
 }
