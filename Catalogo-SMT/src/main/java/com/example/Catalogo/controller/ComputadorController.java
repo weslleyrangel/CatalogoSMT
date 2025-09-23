@@ -1,25 +1,17 @@
 package com.example.Catalogo.controller;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import com.example.Catalogo.dto.ComputadorDTO;
+import com.example.Catalogo.dto.HardwareInfoDTO;
+import com.example.Catalogo.service.ComputadorService;
+import com.example.Catalogo.service.interfaces.IHardwareInfoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import com.example.Catalogo.dto.ComputadorDTO;
-import com.example.Catalogo.service.ComputadorService;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Controlador REST para operações CRUD de Computadores.
@@ -31,16 +23,29 @@ import com.example.Catalogo.service.ComputadorService;
 public class ComputadorController {
 
     private final ComputadorService computadorService;
+    private final IHardwareInfoService hardwareInfoService; // Adicionando o novo serviço
 
     @Autowired
-    public ComputadorController(ComputadorService computadorService) {
+    public ComputadorController(ComputadorService computadorService, IHardwareInfoService hardwareInfoService) {
         this.computadorService = computadorService;
+        this.hardwareInfoService = hardwareInfoService; // Injetando no construtor
+    }
+
+    /**
+     * Endpoint para coletar informações de hardware da máquina local onde o servidor está rodando.
+     * GET /api/computadores/local-info
+     * @return DTO com as informações de hardware.
+     */
+    @GetMapping("/local-info")
+    public ResponseEntity<HardwareInfoDTO> getLocalHardwareInfo() {
+        HardwareInfoDTO hardwareInfo = hardwareInfoService.getLocalHardwareInfo();
+        return ResponseEntity.ok(hardwareInfo);
     }
 
     /**
      * Lista todos os computadores.
      * GET /api/computadores
-     * @return 
+     * @return
      */
     @GetMapping
     public ResponseEntity<List<ComputadorDTO>> listarTodos() {
@@ -52,7 +57,7 @@ public class ComputadorController {
      * Busca um computador específico por patrimônio.
      * GET /api/computadores/{patrimonio}
      * @param patrimonio
-     * @return 
+     * @return
      */
     @GetMapping("/{patrimonio}")
     public ResponseEntity<ComputadorDTO> buscarPorPatrimonio(@PathVariable String patrimonio) {
@@ -64,7 +69,7 @@ public class ComputadorController {
      * Cria um novo computador.
      * POST /api/computadores
      * @param computadorDTO
-     * @return 
+     * @return
      */
     @PostMapping
     public ResponseEntity<ComputadorDTO> criar(@RequestBody ComputadorDTO computadorDTO) {
@@ -77,7 +82,7 @@ public class ComputadorController {
      * PUT /api/computadores/{patrimonio}
      * @param patrimonio
      * @param computadorDTO
-     * @return 
+     * @return
      */
     @PutMapping("/{patrimonio}")
     public ResponseEntity<ComputadorDTO> atualizar(
@@ -91,16 +96,16 @@ public class ComputadorController {
      * Exclui um computador.
      * DELETE /api/computadores/{patrimonio}
      * @param patrimonio
-     * @return 
+     * @return
      */
     @DeleteMapping("/{patrimonio}")
     public ResponseEntity<Map<String, Object>> excluir(@PathVariable String patrimonio) {
         computadorService.excluir(patrimonio);
-        
+
         Map<String, Object> response = new HashMap<>();
         response.put("sucesso", true);
         response.put("mensagem", "Computador excluído com sucesso");
-        
+
         return ResponseEntity.ok(response);
     }
 
@@ -111,7 +116,7 @@ public class ComputadorController {
      * @param setor
      * @param usuario
      * @param status
-     * @return 
+     * @return
      */
     @GetMapping("/filtrar")
     public ResponseEntity<List<ComputadorDTO>> filtrar(
@@ -119,7 +124,7 @@ public class ComputadorController {
             @RequestParam(required = false) String setor,
             @RequestParam(required = false) String usuario,
             @RequestParam(required = false) String status) {
-        
+
         Map<String, String> filtros = new HashMap<>();
         if (setor != null && !setor.trim().isEmpty()) {
             filtros.put("setor", setor);
@@ -138,7 +143,7 @@ public class ComputadorController {
     /**
      * Lista computadores em manutenção.
      * GET /api/computadores/manutencao
-     * @return 
+     * @return
      */
     @GetMapping("/manutencao")
     public ResponseEntity<List<ComputadorDTO>> listarEmManutencao() {
@@ -149,7 +154,7 @@ public class ComputadorController {
     /**
      * Obtém estatísticas dos computadores.
      * GET /api/computadores/estatisticas
-     * @return 
+     * @return
      */
     @GetMapping("/estatisticas")
     public ResponseEntity<Map<String, Long>> obterEstatisticas() {
@@ -161,15 +166,15 @@ public class ComputadorController {
      * Conta computadores por status específico.
      * GET /api/computadores/contar/{status}
      * @param status
-     * @return 
+     * @return
      */
     @GetMapping("/contar/{status}")
     public ResponseEntity<Map<String, Long>> contarPorStatus(@PathVariable String status) {
         long quantidade = computadorService.contarPorStatus(status);
-        
+
         Map<String, Long> response = new HashMap<>();
         response.put("status", quantidade);
-        
+
         return ResponseEntity.ok(response);
     }
 
@@ -177,7 +182,7 @@ public class ComputadorController {
      * Endpoint para buscar computadores por setor específico.
      * GET /api/computadores/setor/{setor}
      * @param setor
-     * @return 
+     * @return
      */
     @GetMapping("/setor/{setor}")
     public ResponseEntity<List<ComputadorDTO>> buscarPorSetor(@PathVariable String setor) {
@@ -190,7 +195,7 @@ public class ComputadorController {
      * Endpoint para buscar computadores por usuário específico.
      * GET /api/computadores/usuario/{usuario}
      * @param usuario
-     * @return 
+     * @return
      */
     @GetMapping("/usuario/{usuario}")
     public ResponseEntity<List<ComputadorDTO>> buscarPorUsuario(@PathVariable String usuario) {
@@ -203,7 +208,7 @@ public class ComputadorController {
      * Endpoint para pesquisa rápida por patrimônio ou usuário.
      * GET /api/computadores/pesquisar?q={termo}
      * @param q
-     * @return 
+     * @return
      */
     @GetMapping("/pesquisar")
     public ResponseEntity<List<ComputadorDTO>> pesquisar(@RequestParam String q) {
@@ -211,3 +216,4 @@ public class ComputadorController {
         return ResponseEntity.ok(computadores);
     }
 }
+

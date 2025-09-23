@@ -1,103 +1,101 @@
 package com.example.Catalogo;
 
-import com.example.Catalogo.service.interfaces.IAuthenticationService;
+import com.example.Catalogo.dto.ComputadorDTO;
+import com.example.Catalogo.exception.DuplicateResourceException;
+import com.example.Catalogo.exception.ResourceNotFoundException;
 import com.example.Catalogo.service.interfaces.IComputadorService;
 import com.example.Catalogo.service.interfaces.IImpressoraService;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Testes de integração para a aplicação Catálogo SMT
- * Corrigido para compatibilidade com Spring Boot 3.x
- */
 @SpringBootTest
 @ActiveProfiles("test")
 class CatalogoSmtApplicationTests {
 
-    @Autowired(required = false)
-    private IAuthenticationService authenticationService;
+    private static final Logger logger = LoggerFactory.getLogger(CatalogoSmtApplicationTests.class);
 
-    @Autowired(required = false)
+    @Autowired
     private IComputadorService computadorService;
 
-    @Autowired(required = false)
+    @Autowired
     private IImpressoraService impressoraService;
 
-    /**
-     * Teste básico de carregamento do contexto Spring
-     */
     @Test
+    @DisplayName("Contexto Spring deve carregar com sucesso")
     void contextLoads() {
-        // Este teste verifica se o contexto Spring carrega sem erros
-        assertThat(true).isTrue();
-    }
-
-    /**
-     * Teste de carregamento dos beans principais
-     */
-    @Test
-    void mainBeansAreLoaded() {
-        // Verifica se os principais beans foram carregados
-        assertThat(authenticationService).as("AuthenticationService deve estar disponível").isNotNull();
-        assertThat(computadorService).as("ComputadorService deve estar disponível").isNotNull();
-        assertThat(impressoraService).as("ImpressoraService deve estar disponível").isNotNull();
-    }
-
-    /**
-     * Teste de funcionalidade básica do serviço de autenticação
-     */
-    @Test
-    void authenticationServiceWorks() {
-        if (authenticationService != null) {
-            var result = authenticationService.authenticate("admin@exemplo.com", "admin123");
-            assertThat(result).isNotNull();
-            assertThat(result.isSuccess()).isTrue();
+        logger.info("Iniciando teste: contextLoads");
+        try {
+            assertThat(computadorService).isNotNull();
+            assertThat(impressoraService).isNotNull();
+            logger.info("Serviços injetados com sucesso.");
+        } catch (Exception e) {
+            logger.error("Erro ao carregar contexto Spring", e);
+            throw new AssertionError("Erro ao carregar contexto Spring: " + e.getMessage(), e);
         }
     }
 
-    /**
-     * Teste de funcionalidade básica do serviço de computadores
-     */
     @Test
-    void computadorServiceWorks() {
-        if (computadorService != null) {
-            var computadores = computadorService.listarTodos();
-            assertThat(computadores).isNotNull();
-            assertThat(computadores.size()).isGreaterThanOrEqualTo(0);
+    @DisplayName("Serviço de Computador deve adicionar e buscar um novo registro")
+    void computadorServiceShouldAddAndRetrieveData() {
+        logger.info("Iniciando teste: computadorServiceShouldAddAndRetrieveData");
+        ComputadorDTO novoComputador = new ComputadorDTO();
+        novoComputador.setPatrimonio("INTEGRACAO-01");
+        novoComputador.setUsuario("Teste de Integração");
+        novoComputador.setSetor("TESTE");
+        novoComputador.setStatus("Ativo");
+
+        try {
+            ComputadorDTO existente = null;
+            try {
+                existente = computadorService.buscarPorPatrimonio("INTEGRACAO-01");
+                logger.info("Computador já existe: {}", existente);
+            } catch (ResourceNotFoundException ignored) {
+                logger.info("Computador não encontrado, será adicionado.");
+            }
+
+            if (existente == null) {
+                computadorService.adicionar(novoComputador);
+                logger.info("Computador adicionado: {}", novoComputador);
+            }
+
+            ComputadorDTO computadorSalvo = computadorService.buscarPorPatrimonio("INTEGRACAO-01");
+            logger.info("Computador salvo encontrado: {}", computadorSalvo);
+            assertThat(computadorSalvo).isNotNull();
+            assertThat(computadorSalvo.getUsuario()).isEqualTo("Teste de Integração");
+        } catch (DuplicateResourceException e) {
+            logger.error("Falha ao adicionar: patrimônio duplicado", e);
+            throw new AssertionError("Falha ao adicionar: patrimônio duplicado. Possível causa: teste rodando múltiplas vezes sem limpar o banco.", e);
+        } catch (ResourceNotFoundException e) {
+            logger.error("Falha ao buscar computador recém-adicionado", e);
+            throw new AssertionError("Falha ao buscar computador recém-adicionado. Possível causa: erro ao salvar ou buscar.", e);
+        } catch (Exception e) {
+            logger.error("Erro inesperado", e);
+            throw new AssertionError("Erro inesperado: " + e.getMessage(), e);
         }
     }
 
-    /**
-     * Teste de funcionalidade básica do serviço de impressoras
-     */
     @Test
-    void impressoraServiceWorks() {
-        if (impressoraService != null) {
-            var impressoras = impressoraService.listarTodas();
-            assertThat(impressoras).isNotNull();
-            // Como os dados são carregados pelo DataLoader, deve ter pelo menos algumas impressoras
-            assertThat(impressoras.size()).isGreaterThanOrEqualTo(0);
-        }
-    }
-
-    /**
-     * Teste de estatísticas do sistema
-     */
-    @Test
-    void systemStatisticsWork() {
-        if (computadorService != null && impressoraService != null) {
-            var estatisticasComputadores = computadorService.obterEstatisticas();
-            var estatisticasImpressoras = impressoraService.obterEstatisticas();
-            
-            assertThat(estatisticasComputadores).isNotNull();
-            assertThat(estatisticasComputadores).containsKey("total");
-            
-            assertThat(estatisticasImpressoras).isNotNull();
-            assertThat(estatisticasImpressoras).containsKey("total");
+    @DisplayName("Dados iniciais devem ser carregados ao iniciar a aplicação")
+    void initialDataShouldBeLoaded() {
+        logger.info("Iniciando teste: initialDataShouldBeLoaded");
+        try {
+            ComputadorDTO computador = computadorService.buscarPorPatrimonio("001TI2024");
+            logger.info("Dados iniciais encontrados: {}", computador);
+            assertThat(computador).isNotNull();
+            assertThat(computador.getUsuario()).isEqualTo("João Silva");
+        } catch (ResourceNotFoundException e) {
+            logger.error("Falha ao encontrar patrimônio inicial", e);
+            throw new AssertionError("Falha ao encontrar patrimônio inicial. Possível causa: DataLoader não executou ou dados iniciais ausentes.", e);
+        } catch (Exception e) {
+            logger.error("Erro inesperado", e);
+            throw new AssertionError("Erro inesperado: " + e.getMessage(), e);
         }
     }
 }

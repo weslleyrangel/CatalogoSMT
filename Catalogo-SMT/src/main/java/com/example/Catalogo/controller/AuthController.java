@@ -1,7 +1,7 @@
 package com.example.Catalogo.controller;
 
-import com.example.Catalogo.service.AuthenticationService.AuthenticationResult;
-import com.example.Catalogo.service.interfaces.IAuthenticationService;
+import com.example.Catalogo.service.AuthenticationService.AuthenticationResult; // Note que ele importa a classe interna de AuthenticationService
+import com.example.Catalogo.service.interfaces.IAuthenticationService; // Importa a interface
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -9,20 +9,15 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Controlador REST para operações de autenticação.
- * Refatorado aplicando o princípio SRP - Single Responsibility Principle.
- * Responsável apenas por gerenciar as rotas HTTP relacionadas à autenticação.
- */
 @RestController
 @RequestMapping("/api/auth")
 @CrossOrigin(origins = "*")
 public class AuthController {
 
-    private final IAuthenticationService authenticationService;
+    private final IAuthenticationService authenticationService; 
 
     @Autowired
-    public AuthController(IAuthenticationService authenticationService) {
+    public AuthController(IAuthenticationService authenticationService) { 
         this.authenticationService = authenticationService;
     }
 

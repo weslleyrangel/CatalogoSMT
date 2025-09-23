@@ -10,7 +10,7 @@ import java.util.Map;
  * Serviço de autenticação responsável por validar credenciais e gerenciar sessões.
  * Implementa o princípio SRP separando a lógica de autenticação do controle de rotas HTTP.
  */
-@Service
+@Service 
 public class AuthenticationService implements IAuthenticationService {
 
     private final Map<String, UserCredential> validCredentials;
