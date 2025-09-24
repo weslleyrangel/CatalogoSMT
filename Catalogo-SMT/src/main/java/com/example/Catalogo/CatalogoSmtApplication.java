@@ -181,8 +181,8 @@ public class CatalogoSmtApplication {
         System.out.println("🌐 API Base URL: http://localhost:8080/api");
         System.out.println("🗄️  H2 Console: http://localhost:8080/h2-console");
         System.out.println("   - JDBC URL: jdbc:h2:mem:inventory_db");
-        System.out.println("   - Username: sa");
-        System.out.println("   - Password: (em branco)");
+        System.out.println("   - Username: natal");
+        System.out.println("   - Password: rn");
         System.out.println();
         System.out.println("📋 Endpoints principais:");
         System.out.println("   - GET  /api/computadores          - Listar computadores");
