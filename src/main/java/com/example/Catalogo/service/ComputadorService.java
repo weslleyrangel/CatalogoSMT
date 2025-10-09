@@ -1,41 +1,39 @@
 package com.example.Catalogo.service;
 
 import com.example.Catalogo.dto.ComputadorDTO;
-import com.example.Catalogo.exception.ResourceNotFoundException;
 import com.example.Catalogo.exception.DuplicateResourceException;
+import com.example.Catalogo.exception.ResourceNotFoundException;
 import com.example.Catalogo.model.Computador;
+import com.example.Catalogo.model.HistoricoManutencao;
 import com.example.Catalogo.repository.ComputadorRepository;
+import com.example.Catalogo.repository.HistoricoManutencaoRepository;
 import com.example.Catalogo.service.interfaces.IComputadorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/**
- * Serviço de computadores refatorado implementando a interface IComputadorService.
- * Aplica os princípios DIP e SRP.
- */
 @Service
 @Transactional
 public class ComputadorService implements IComputadorService {
 
     private final ComputadorRepository computadorRepository;
+    private final HistoricoManutencaoRepository historicoManutencaoRepository;
 
     @Autowired
-    public ComputadorService(ComputadorRepository computadorRepository) {
+    public ComputadorService(ComputadorRepository computadorRepository, HistoricoManutencaoRepository historicoManutencaoRepository) {
         this.computadorRepository = computadorRepository;
+        this.historicoManutencaoRepository = historicoManutencaoRepository;
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<ComputadorDTO> listarTodos() {
-        return computadorRepository.findAll()
-                .stream()
-                .map(ComputadorDTO::new)
-                .collect(Collectors.toList());
+        return computadorRepository.findAll().stream().map(ComputadorDTO::new).collect(Collectors.toList());
     }
 
     @Override
@@ -45,19 +43,54 @@ public class ComputadorService implements IComputadorService {
         return new ComputadorDTO(computador);
     }
 
+    /**
+     * CORREÇÃO: Adicionada a lógica para criar um histórico de manutenção
+     * se um novo computador for cadastrado diretamente com o status "Manutenção".
+     */
     @Override
     public ComputadorDTO adicionar(ComputadorDTO computadorDTO) {
         validateNewComputador(computadorDTO);
         
         Computador computador = computadorDTO.toEntity();
+        
         Computador computadorSalvo = computadorRepository.save(computador);
+
+        if ("Manutenção".equals(computadorSalvo.getStatus())) {
+            HistoricoManutencao novoHistorico = new HistoricoManutencao();
+            novoHistorico.setDataEntrada(computadorSalvo.getDataCriacao());
+            novoHistorico.setDetalhes(computadorDTO.getDetalhesManutencao());
+            novoHistorico.setComputador(computadorSalvo);
+            
+            computadorSalvo.getHistoricoManutencoes().add(novoHistorico);
+            computadorRepository.save(computadorSalvo);
+        }
+
         return new ComputadorDTO(computadorSalvo);
     }
 
     @Override
     public ComputadorDTO atualizar(String patrimonio, ComputadorDTO computadorDTO) {
         Computador computadorExistente = findComputadorByPatrimonio(patrimonio);
-        
+        String statusAntigo = computadorExistente.getStatus();
+        String statusNovo = computadorDTO.getStatus();
+
+        if (!"Manutenção".equals(statusAntigo) && "Manutenção".equals(statusNovo)) {
+            HistoricoManutencao novoHistorico = new HistoricoManutencao();
+            novoHistorico.setDataEntrada(LocalDateTime.now());
+            novoHistorico.setDetalhes(computadorDTO.getDetalhesManutencao());
+            novoHistorico.setComputador(computadorExistente);
+            computadorExistente.getHistoricoManutencoes().add(novoHistorico);
+        }
+        else if ("Manutenção".equals(statusAntigo) && !"Manutenção".equals(statusNovo)) {
+            historicoManutencaoRepository.findTopByComputadorAndDataSaidaIsNullOrderByDataEntradaDesc(computadorExistente)
+                .ifPresent(historico -> {
+                    historico.setDataSaida(LocalDateTime.now());
+                    String detalhesProblema = historico.getDetalhes() != null ? historico.getDetalhes() : "N/A";
+                    String detalhesSolucao = computadorDTO.getDetalhesManutencao() != null ? computadorDTO.getDetalhesManutencao() : "N/A";
+                    historico.setDetalhes("PROBLEMA:\n" + detalhesProblema + "\n\nSOLUÇÃO:\n" + detalhesSolucao);
+                });
+        }
+
         updateComputadorFields(computadorExistente, computadorDTO);
         
         Computador computadorAtualizado = computadorRepository.save(computadorExistente);
@@ -75,25 +108,14 @@ public class ComputadorService implements IComputadorService {
     @Override
     @Transactional(readOnly = true)
     public List<ComputadorDTO> filtrar(String termoPesquisa, Map<String, String> filtros) {
-        FilterCriteria criteria = buildFilterCriteria(termoPesquisa, filtros);
-        
-        return computadorRepository.findWithFilters(
-                criteria.patrimonio, 
-                criteria.usuario, 
-                criteria.setor, 
-                criteria.status
-        ).stream()
-         .map(ComputadorDTO::new)
-         .collect(Collectors.toList());
+        String status = filtros.get("status");
+        return computadorRepository.findWithFilters(termoPesquisa, status).stream().map(ComputadorDTO::new).collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<ComputadorDTO> obterEmManutencao() {
-        return computadorRepository.findEmManutencao()
-                .stream()
-                .map(ComputadorDTO::new)
-                .collect(Collectors.toList());
+        return computadorRepository.findEmManutencao().stream().map(ComputadorDTO::new).collect(Collectors.toList());
     }
 
     @Override
@@ -113,17 +135,14 @@ public class ComputadorService implements IComputadorService {
         );
     }
 
-    // Métodos privados para melhor organização e reutilização
     private Computador findComputadorByPatrimonio(String patrimonio) {
         return computadorRepository.findByPatrimonio(patrimonio)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                    "Computador não encontrado com patrimônio: " + patrimonio));
+                .orElseThrow(() -> new ResourceNotFoundException("Computador não encontrado com patrimônio: " + patrimonio));
     }
 
     private void validateNewComputador(ComputadorDTO computadorDTO) {
         if (computadorRepository.existsByPatrimonio(computadorDTO.getPatrimonio())) {
-            throw new DuplicateResourceException(
-                "Já existe um computador com o patrimônio: " + computadorDTO.getPatrimonio());
+            throw new DuplicateResourceException("Já existe um computador com o patrimônio: " + computadorDTO.getPatrimonio());
         }
     }
 
@@ -137,32 +156,9 @@ public class ComputadorService implements IComputadorService {
         existente.setRam(dto.getRam());
         existente.setArmazenamento(dto.getArmazenamento());
         existente.setOs(dto.getOs());
-    }
-
-    private FilterCriteria buildFilterCriteria(String termoPesquisa, Map<String, String> filtros) {
-        FilterCriteria criteria = new FilterCriteria();
-        
-        if (termoPesquisa != null && !termoPesquisa.trim().isEmpty()) {
-            criteria.patrimonio = termoPesquisa.trim();
-            criteria.usuario = termoPesquisa.trim();
-        }
-
-        criteria.setor = filtros.get("setor");
-        criteria.status = filtros.get("status");
-        
-        if (filtros.containsKey("usuario") && 
-            filtros.get("usuario") != null && 
-            !filtros.get("usuario").trim().isEmpty()) {
-            criteria.usuario = filtros.get("usuario");
-        }
-
-        return criteria;
-    }
-
-    private static class FilterCriteria {
-        String patrimonio;
-        String usuario;
-        String setor;
-        String status;
+        existente.setTipoDispositivo(dto.getTipoDispositivo());
+        existente.setPlacaMae(dto.getPlacaMae());
+        existente.setBios(dto.getBios());
+        existente.setMemoriaDetalhes(dto.getMemoriaDetalhes());
     }
 }

@@ -32,6 +32,9 @@ public interface ComputadorRepository extends JpaRepository<Computador, String> 
      */
     Optional<Computador> findByPatrimonio(String patrimonio);
 
+
+    List<Computador> findTop5ByOrderByDataCriacaoDesc();
+
     /**
      * Verifica se existe um computador com o patrimônio informado.
      *
@@ -81,15 +84,16 @@ public interface ComputadorRepository extends JpaRepository<Computador, String> 
      * @param status Status (pode ser nulo)
      * @return Lista de computadores que atendem aos critérios
      */
-    @Query("SELECT c FROM Computador c WHERE "
-            + "(:patrimonio IS NULL OR LOWER(c.patrimonio) LIKE LOWER(CONCAT('%', :patrimonio, '%'))) AND "
-            + "(:usuario IS NULL OR LOWER(c.usuario) LIKE LOWER(CONCAT('%', :usuario, '%'))) AND "
-            + "(:setor IS NULL OR c.setor = :setor) AND "
-            + "(:status IS NULL OR c.status = :status)")
-    List<Computador> findWithFilters(@Param("patrimonio") String patrimonio,
-            @Param("usuario") String usuario,
-            @Param("setor") String setor,
-            @Param("status") String status);
+    @Query("SELECT c FROM Computador c WHERE " +
+           "(:termo IS NULL OR " +
+           "LOWER(c.patrimonio) LIKE LOWER(CONCAT('%', :termo, '%')) OR " +
+           "LOWER(c.usuario) LIKE LOWER(CONCAT('%', :termo, '%')) OR " +
+           "LOWER(c.setor) LIKE LOWER(CONCAT('%', :termo, '%'))) AND " +
+           "(:status IS NULL OR c.status = :status)")
+    List<Computador> findWithFilters(
+        @Param("termo") String termo,
+        @Param("status") String status
+    );
 
     /**
      * Conta o número total de computadores por status.

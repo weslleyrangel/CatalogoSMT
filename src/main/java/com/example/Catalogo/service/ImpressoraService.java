@@ -14,10 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/**
- * Camada de serviço para operações de negócio relacionadas a Impressoras/Scanners.
- * Contém toda a lógica de negócio e validações necessárias.
- */
 @Service
 @Transactional
 public class ImpressoraService implements IImpressoraService {
@@ -27,7 +23,7 @@ public class ImpressoraService implements IImpressoraService {
     public ImpressoraService(ImpressoraRepository impressoraRepository) {
         this.impressoraRepository = impressoraRepository;
     }
-
+    
     @Override
     @Transactional(readOnly = true)
     public List<ImpressoraDTO> listarTodas() {
@@ -71,20 +67,20 @@ public class ImpressoraService implements IImpressoraService {
         impressoraRepository.deleteById(patrimonio);
     }
 
+    /**
+     * CORREÇÃO: O método foi simplificado para passar o termo de pesquisa
+     * diretamente para a nova consulta do repositório.
+     */
     @Override
     @Transactional(readOnly = true)
     public List<ImpressoraDTO> filtrar(String termoPesquisa, Map<String, String> filtros) {
-        FilterCriteria criteria = buildFilterCriteria(termoPesquisa, filtros);
+        String tipo = filtros.get("tipo");
+        String status = filtros.get("status");
         
-        return impressoraRepository.findWithFilters(
-                criteria.patrimonio, 
-                criteria.tipo, 
-                criteria.modelo, 
-                criteria.localizacao, 
-                criteria.status
-        ).stream()
-         .map(ImpressoraDTO::new)
-         .collect(Collectors.toList());
+        return impressoraRepository.findWithFilters(termoPesquisa, tipo, status)
+                .stream()
+                .map(ImpressoraDTO::new)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -153,27 +149,4 @@ public class ImpressoraService implements IImpressoraService {
         existente.setIp(dto.getIp());
         existente.setPorta(dto.getPorta());
     }
-
-    private FilterCriteria buildFilterCriteria(String termoPesquisa, Map<String, String> filtros) {
-        FilterCriteria criteria = new FilterCriteria();
-        
-        if (termoPesquisa != null && !termoPesquisa.trim().isEmpty()) {
-            criteria.patrimonio = termoPesquisa.trim();
-            criteria.modelo = termoPesquisa.trim();
-        }
-
-        criteria.tipo = filtros.get("tipo");
-        criteria.status = filtros.get("status");
-
-        return criteria;
-    }
-
-    private static class FilterCriteria {
-        String patrimonio;
-        String tipo;
-        String modelo;
-        String localizacao;
-        String status;
-    }
 }
-    

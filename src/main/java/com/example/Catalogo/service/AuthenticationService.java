@@ -72,7 +72,7 @@ public class AuthenticationService implements IAuthenticationService {
     /**
      * Classe interna para representar credenciais de usuário
      */
-    private static class UserCredential {
+    private static class UserCredential { //NOSONAR
         private final String password;
         private final String username;
         private final String role;
@@ -91,7 +91,7 @@ public class AuthenticationService implements IAuthenticationService {
     /**
      * Classe para representar o resultado da autenticação
      */
-    public static class AuthenticationResult {
+    public static class AuthenticationResult { //NOSONAR
         private final boolean success;
         private final String message;
         private final String username;

@@ -42,17 +42,19 @@ public interface ImpressoraRepository extends JpaRepository<Impressora, String> 
      * @param status Status (pode ser nulo)
      * @return Lista de impressoras que atendem aos critérios
      */
-    @Query("SELECT i FROM Impressora i WHERE "
-            + "(:patrimonio IS NULL OR LOWER(i.patrimonio) LIKE LOWER(CONCAT('%', :patrimonio, '%'))) AND "
-            + "(:tipo IS NULL OR i.tipo = :tipo) AND "
-            + "(:modelo IS NULL OR LOWER(i.modelo) LIKE LOWER(CONCAT('%', :modelo, '%'))) AND "
-            + "(:localizacao IS NULL OR LOWER(i.localizacao) LIKE LOWER(CONCAT('%', :localizacao, '%'))) AND "
-            + "(:status IS NULL OR i.status = :status)")
-    List<Impressora> findWithFilters(@Param("patrimonio") String patrimonio,
+   @Query("SELECT i FROM Impressora i WHERE " +
+           "(:termo IS NULL OR " +
+           "LOWER(i.patrimonio) LIKE LOWER(CONCAT('%', :termo, '%')) OR " +
+           "LOWER(i.modelo) LIKE LOWER(CONCAT('%', :termo, '%')) OR " +
+           "LOWER(i.fabricante) LIKE LOWER(CONCAT('%', :termo, '%')) OR " +
+           "LOWER(i.localizacao) LIKE LOWER(CONCAT('%', :termo, '%'))) AND " +
+           "(:tipo IS NULL OR i.tipo = :tipo) AND " +
+           "(:status IS NULL OR i.status = :status)")
+    List<Impressora> findWithFilters(
+            @Param("termo") String termo,
             @Param("tipo") String tipo,
-            @Param("modelo") String modelo,
-            @Param("localizacao") String localizacao,
-            @Param("status") String status);
+            @Param("status") String status
+    );
 
     long countByStatus(String status);
 
